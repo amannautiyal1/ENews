@@ -1,34 +1,33 @@
-const client = require('../config/opensearch');
+const client = require("../config/opensearch");
 
 // Create the articles index
 async function createIndex() {
   try {
-    
     const response = await client.indices.create({
-      index: 'articles_index',
+      index: "articles_index",
       body: {
         settings: {
           analysis: {
             tokenizer: {
-              standard: { type: 'standard' },
+              standard: { type: "standard" },
             },
           },
         },
         mappings: {
           properties: {
-            title: { type: 'text' },
-            author: { type: 'keyword' },
-            content: { type: 'text' },
-            tags: { type: 'keyword' },
-            published_date: { type: 'date' },
-            created_at: { type: 'date' },
+            title: { type: "text" },
+            author: { type: "keyword" },
+            content: { type: "text" },
+            tags: { type: "keyword" },
+            published_date: { type: "date" },
+            created_at: { type: "date" },
           },
         },
       },
     });
-    console.log('Index created:', response);
+    console.log("Index created:", response);
   } catch (error) {
-    console.error('Error creating index:', error);
+    console.error("Error creating index:", error);
     throw error;
   }
 }
@@ -37,12 +36,12 @@ async function createIndex() {
 async function insertArticle(article) {
   try {
     const response = await client.index({
-      index: 'articles_index',
+      index: "articles_index",
       body: article,
     });
-    console.log('Article inserted:', response.body);
+    console.log("Article inserted:", response.body);
   } catch (error) {
-    console.error('Error inserting article:', error);
+    console.error("Error inserting article:", error);
     throw error;
   }
 }
@@ -51,7 +50,7 @@ async function insertArticle(article) {
 async function searchArticlesByTag(tag) {
   try {
     const response = await client.search({
-      index: 'articles_index',
+      index: "articles_index",
       body: {
         query: {
           term: {
@@ -62,13 +61,98 @@ async function searchArticlesByTag(tag) {
     });
     return response.body.hits.hits;
   } catch (error) {
-    console.error('Error searching by tag:', error);
+    console.error("Error searching by tag:", error);
     throw error;
   }
 }
+const ArticleService = require("../service/article");
+async function create(req, res) {
+  try {
+    const { index, id, body } = req.body;
+    const result = await ArticleService.create(index, id, body);
+    res.status(201).send(result);
+  } catch (err) {
+    res.status(500).send(err.message);
+  }
+}
+
+async function get(req, res) {
+  try {
+    const { index, id } = req.params;
+    const result = await ArticleService.get(index, id);
+    res.send(result);
+  } catch (err) {
+    res.status(500).send(err.message);
+  }
+}
+
+async function update(req, res) {
+  try {
+    const { index, id } = req.params;
+    const result = await ArticleService.update(index, id, req.body);
+    res.send(result);
+  } catch (err) {
+    res.status(500).send(err.message);
+  }
+}
+
+async function remove(req, res) {
+  try {
+    const { index, id } = req.params;
+    const result = await ArticleService.remove(index, id);
+    res.send(result);
+  } catch (err) {
+    res.status(500).send(err.message);
+  }
+}
+
+async function search(req, res) {
+    try {
+      const { index } = req.params;
+      const { filters = {}, match = {} } = req.body;
+  
+      const must = [];
+  
+      // Handle exact match or range queries
+      for (const [key, value] of Object.entries(filters)) {
+        if (typeof value === 'object' && (value.gte || value.lte)) {
+          must.push({ range: { [key]: value } });
+        } else {
+          must.push({ term: { [key]: value } });
+        }
+      }
+  
+      // Handle match queries for text fields
+      for (const [key, value] of Object.entries(match)) {
+        must.push({ match: { [key]: value } });
+      }
+  
+      const queryBody = {
+        index,
+        body: {
+          query: {
+            bool: {
+              must
+            }
+          }
+        }
+      };
+  
+      const result = await ArticleService.search(queryBody); // <-- Pass full search body
+      res.send(result);
+    } catch (err) {
+      res.status(500).send(err.message);
+    }
+  }
+  
 
 module.exports = {
   createIndex,
   insertArticle,
   searchArticlesByTag,
+  create,
+  get,
+  update,
+  remove,
+  search,
 };
