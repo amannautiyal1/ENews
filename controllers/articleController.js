@@ -144,6 +144,21 @@ async function search(req, res) {
       res.status(500).send(err.message);
     }
   }
+  async function bulkInsert(req, res) {
+    try {
+      const { index } = req.params;
+      const { documents } = req.body;
+
+      if (!Array.isArray(documents)) {
+        return res.status(400).json({ message: "documents must be an array" });
+      }
+
+      const result = await ArticleService.bulkInsert(index, documents);
+      res.status(201).send(result);
+    } catch (err) {
+      res.status(500).send(err.message);
+    }
+  }
   
 
 module.exports = {
@@ -155,4 +170,5 @@ module.exports = {
   update,
   remove,
   search,
+  bulkInsert
 };

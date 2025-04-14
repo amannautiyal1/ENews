@@ -48,6 +48,23 @@ class ArticleService {
       }))
     };
   }
+
+  async bulkInsert(index, documents) {
+    const body = [];
+
+    documents.forEach(doc => {
+      body.push({ index: { _index: index } });
+      body.push(doc);
+    });
+
+    const response = await client.bulk({ refresh: true, body });
+
+    const errors = response.body.items.filter(item => item.index?.error);
+
+    return errors.length > 0
+      ? { message: "Partial success", errors }
+      : { message: "All documents inserted successfully", count: documents.length };
+  }
   
 }
 
