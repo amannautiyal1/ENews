@@ -8,5 +8,6 @@ router.put('/:index/:id', ArticleController.update);
 router.delete('/:index/:id', ArticleController.remove);
 router.post('/:index/_search', ArticleController.search);
 router.post('/:index/_bulk', ArticleController.bulkInsert);
+router.post('/:index/search-text', ArticleController.searchByText);
 
 module.exports = router;

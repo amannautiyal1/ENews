@@ -65,7 +65,28 @@ class ArticleService {
       ? { message: "Partial success", errors }
       : { message: "All documents inserted successfully", count: documents.length };
   }
-  
+  async searchByText(index, text) {
+    const query = {
+      index,
+      body: {
+        query: {
+          multi_match: {
+            query: text,
+            fields: ['title^3', 'content', 'tags'], // Boost title
+            fuzziness: 'AUTO'
+          }
+        }
+      }
+    };
+
+    const { body } = await client.search(query);
+
+    return body.hits.hits.map(hit => ({
+      id: hit._id,
+      score: hit._score,
+      ...hit._source
+    }));
+  }
 }
 
 module.exports = new ArticleService();

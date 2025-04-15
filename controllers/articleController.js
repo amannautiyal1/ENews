@@ -159,6 +159,19 @@ async function search(req, res) {
       res.status(500).send(err.message);
     }
   }
+  async function searchByText(req, res) {
+    try {
+      const { index } = req.params;
+      const { text } = req.body;
+      if (!text) return res.status(400).json({ message: 'Search text is required.' });
+
+      const results = await ArticleService.searchByText(index, text);
+      res.json(results);
+    } catch (err) {
+      console.error('Search error:', err);
+      res.status(500).json({ message: err.message });
+    }
+  }
   
 
 module.exports = {
@@ -170,5 +183,6 @@ module.exports = {
   update,
   remove,
   search,
-  bulkInsert
+  bulkInsert,
+  searchByText
 };
